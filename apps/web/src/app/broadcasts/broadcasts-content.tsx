@@ -19,6 +19,7 @@ export default function BroadcastsContent() {
 
     const [statusFilter, setStatusFilter] = useState<BroadcastStatus | null>(null);
     const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
+    const [total, setTotal] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [accounts, setAccounts] = useState<AccountOption[]>([]);
     const [teamMembers, setTeamMembers] = useState<TeamMemberOption[]>([]);
@@ -35,6 +36,7 @@ export default function BroadcastsContent() {
             if (res.ok) {
                 const data = await res.json();
                 setBroadcasts(data.broadcasts);
+                setTotal(typeof data.total === 'number' ? data.total : null);
             } else {
                 const body = await res.json().catch(() => ({}));
                 setError(body.error ?? `Failed to fetch broadcasts (${res.status})`);
@@ -192,6 +194,12 @@ export default function BroadcastsContent() {
                 activeFilter={statusFilter}
                 loading={loading}
             />
+            {total !== null && total > broadcasts.length && (
+                <p className="mt-4 text-sm text-muted-foreground">
+                    Showing {broadcasts.length} of {total} broadcasts. Refine the filter or add
+                    pagination to see more.
+                </p>
+            )}
         </div>
     );
 }

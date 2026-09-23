@@ -34,6 +34,7 @@ export default function DocsPage() {
     const [activeTab, setActiveTab] = useState<Tab>('published');
     const [categories, setCategories] = useState<DocCategory[]>([]);
     const [articles, setArticles] = useState<DocArticle[]>([]);
+    const [total, setTotal] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -50,6 +51,7 @@ export default function DocsPage() {
                 if (artRes.ok) {
                     const artData = await artRes.json();
                     setArticles(artData.articles);
+                    setTotal(typeof artData.total === 'number' ? artData.total : null);
                 }
             } finally {
                 setLoading(false);
@@ -144,6 +146,12 @@ export default function DocsPage() {
                 articles={activeTab === 'ai-drafts' ? aiDrafts : published}
                 categoryId=""
             />
+            {total !== null && total > articles.length && (
+                <p className="mt-4 text-sm text-muted-foreground">
+                    Showing {articles.length} of {total} articles. Server-side status
+                    filtering with per-section pagination is a follow-up.
+                </p>
+            )}
         </div>
     );
 }

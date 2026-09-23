@@ -21,7 +21,9 @@ export async function GET(request: NextRequest) {
 
     const rawPage = Number.parseInt(searchParams.get('page') ?? '', 10);
     const rawPageSize = Number.parseInt(searchParams.get('pageSize') ?? '', 10);
-    const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1;
+    const MAX_PAGE = 10000;
+    const page =
+        Number.isSafeInteger(rawPage) && rawPage >= 1 && rawPage <= MAX_PAGE ? rawPage : 1;
     const pageSize = Number.isFinite(rawPageSize)
         ? Math.min(MAX_PAGE_SIZE, Math.max(1, rawPageSize))
         : DEFAULT_PAGE_SIZE;

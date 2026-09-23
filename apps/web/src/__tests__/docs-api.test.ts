@@ -169,6 +169,20 @@ describe('GET /api/docs/articles', () => {
         expect(body.page).toBe(2);
         expect(body.pageSize).toBe(10);
     });
+
+    it('clamps pageSize to 100', async () => {
+        mockDocArticleFindMany.mockResolvedValue([]);
+        mockDocArticleCount.mockResolvedValue(0);
+
+        const req = makeGetRequest('http://localhost:3000/api/docs/articles?pageSize=9999');
+        const res = await getArticles(req as never);
+        const body = await res.json();
+
+        expect(mockDocArticleFindMany).toHaveBeenCalledWith(
+            expect.objectContaining({ take: 100 }),
+        );
+        expect(body.pageSize).toBe(100);
+    });
 });
 
 describe('POST /api/docs/articles', () => {
