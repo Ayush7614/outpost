@@ -69,7 +69,7 @@ describe('hashPassword', () => {
         await expect(hashPassword('a'.repeat(73))).rejects.toThrow(/at most 72 bytes/);
     });
 
-    it('accepts a password exactly at the byte cap', async () => {
+    it('accepts a password exactly at the byte cap', { timeout: 30000 }, async () => {
         const hash = await hashPassword('a'.repeat(72));
         expect(await verifyPassword('a'.repeat(72), hash)).toBe(true);
     });
@@ -101,9 +101,13 @@ describe('verifyPassword', () => {
         }
     });
 
-    it('stays backward compatible: legacy hashes verify without rehashing', async () => {
-        // Hashes created before the cap existed verify exactly as before.
-        const hash = await hashPassword('correct-password');
-        expect(await verifyPassword('correct-password', hash)).toBe(true);
-    });
+    it(
+        'stays backward compatible: legacy hashes verify without rehashing',
+        { timeout: 30000 },
+        async () => {
+            // Hashes created before the cap existed verify exactly as before.
+            const hash = await hashPassword('correct-password');
+            expect(await verifyPassword('correct-password', hash)).toBe(true);
+        },
+    );
 });

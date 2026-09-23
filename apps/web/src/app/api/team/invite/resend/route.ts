@@ -9,7 +9,7 @@ import { sendEmail } from '@copilotkit/outpost/shared/server';
  * Without this, a compromised admin session (or a retry loop) can emit an
  * unbounded stream of invite emails.
  */
-export const INVITE_RESEND_COOLDOWN_MS = 60_000;
+const INVITE_RESEND_COOLDOWN_MS = 60_000;
 
 export async function POST(request: Request) {
     const { error } = await requireAdmin();
