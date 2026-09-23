@@ -1,4 +1,3 @@
-import { randomInt } from 'node:crypto';
 import { TICKET_ID_PREFIX, BACKOFF_BASE_MS, BACKOFF_MAX_MS } from './constants.js';
 
 /**
@@ -6,15 +5,19 @@ import { TICKET_ID_PREFIX, BACKOFF_BASE_MS, BACKOFF_MAX_MS } from './constants.j
  * Uses 8 random characters from a 32-char alphabet (~1.1 trillion keyspace)
  * to make collisions negligible at scale.
  *
- * Drawn from `crypto.randomInt` (CSPRNG): display IDs are pasted into public
- * threads and are therefore harvestable, so a non-crypto RNG would let an
- * attacker shrink the search space for ID enumeration.
+ * Drawn from Web Crypto (`globalThis.crypto.getRandomValues`, a CSPRNG, so it
+ * works in both Node and browser bundles): display IDs are short and public,
+ * so keeping them unguessable is good hygiene. Authorization still lives at
+ * the gates — knowing an ID alone grants nothing.
  */
 export function generateTicketId(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Omit ambiguous chars
+    const bytes = new Uint8Array(8);
+    globalThis.crypto.getRandomValues(bytes);
     let id = '';
     for (let i = 0; i < 8; i++) {
-        id += chars[randomInt(chars.length)];
+        // 256 is an exact multiple of 32, so masking is uniform.
+        id += chars[bytes[i]! & 31];
     }
     return `${TICKET_ID_PREFIX}-${id}`;
 }
