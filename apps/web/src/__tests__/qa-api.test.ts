@@ -31,7 +31,8 @@ vi.mock('@/lib/auth', () => ({
 }));
 
 // Import after mocking
-import { POST, sanitizeHistory } from '@/app/api/qa/route';
+import { POST } from '@/app/api/qa/route';
+import { sanitizeHistory } from '@/lib/qa-limits';
 
 function makeRequest(body: Record<string, unknown>): Request {
     return new Request('http://localhost:3000/api/qa', {
@@ -367,6 +368,35 @@ describe('POST /api/qa', () => {
             tokenUsage: { inputTokens: 1, outputTokens: 1 },
             latencyMs: 1,
         });
+    });
+
+    it('threads the request abort signal through to the pipeline', async () => {
+        mockGenerateSupportResponse.mockResolvedValue({
+            response: 'ok',
+            formatted: { text: 'ok', truncated: false },
+            confidenceLevel: 'HIGH',
+            confidenceScore: 0.9,
+            searchResults: [],
+            tokenUsage: { inputTokens: 1, outputTokens: 1 },
+            latencyMs: 1,
+        });
+
+        const aborter = new AbortController();
+        const request = new Request('http://localhost:3000/api/qa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question: 'hi' }),
+            signal: aborter.signal,
+        });
+
+        const response = await POST(request);
+        await readStream(response);
+
+        expect(mockGenerateSupportResponse).toHaveBeenCalledWith(
+            'hi',
+            expect.objectContaining({ signal: request.signal }),
+        );
+        expect(request.signal).toBeInstanceOf(AbortSignal);
     });
 });
 
