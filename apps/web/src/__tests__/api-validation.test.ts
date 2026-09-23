@@ -152,6 +152,13 @@ describe('parsePagination', () => {
         expect(p.page).toBe(1);
         expect(p.pageSize).toBe(100);
     });
+
+    it('falls back to page 1 for a huge page that would overflow skip', () => {
+        const p = parsePagination(new URLSearchParams('page=99999999999999999999&pageSize=100'));
+        expect(p.page).toBe(1);
+        expect(p.skip).toBe(0);
+        expect(Number.isSafeInteger(p.skip)).toBe(true);
+    });
 });
 
 describe('sanitizeSearch', () => {
@@ -193,9 +200,7 @@ describe('ticketCreateSchema', () => {
     });
 
     it('rejects unknown enum values', () => {
-        expect(
-            ticketCreateSchema.safeParse({ ...valid, priority: 'URGENT' }).success,
-        ).toBe(false);
+        expect(ticketCreateSchema.safeParse({ ...valid, priority: 'URGENT' }).success).toBe(false);
         expect(ticketCreateSchema.safeParse({ ...valid, source: 'SMS' }).success).toBe(false);
     });
 });
@@ -258,9 +263,7 @@ describe('GET /api/tickets validation', () => {
     });
 
     it('accepts valid enum filters and passes them through', async () => {
-        const res = await ticketsGet(
-            getRequest('/api/tickets?status=OPEN&priority=HIGH') as never,
-        );
+        const res = await ticketsGet(getRequest('/api/tickets?status=OPEN&priority=HIGH') as never);
         expect(res.status).toBe(200);
         const where = mockTicketFindMany.mock.calls[0][0].where;
         expect(where.status).toEqual({ in: ['OPEN'] });
@@ -289,6 +292,12 @@ describe('POST /api/tickets validation', () => {
         const res = await ticketsPost(jsonRequest('/api/tickets', {}) as never);
         expect(res.status).toBe(400);
         expect((await res.json()).error).toBe('title and description are required');
+    });
+
+    it('returns 400 (not 500) for a JSON null body', async () => {
+        const res = await ticketsPost(jsonRequest('/api/tickets', null) as never);
+        expect(res.status).toBe(400);
+        expect(mockTicketCreate).not.toHaveBeenCalled();
     });
 
     it('returns 400 for a non-string title', async () => {

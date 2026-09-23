@@ -3,7 +3,13 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@copilotkit/outpost/db';
 import { generateTicketId } from '@copilotkit/outpost/shared';
-import { TicketStatus, TicketPriority, TicketType, TicketSource, Prisma } from '@copilotkit/outpost/db';
+import {
+    TicketStatus,
+    TicketPriority,
+    TicketType,
+    TicketSource,
+    Prisma,
+} from '@copilotkit/outpost/db';
 import {
     ticketCreateSchema,
     formatZodError,
@@ -113,10 +119,7 @@ export async function GET(request: NextRequest) {
         });
     } catch (error) {
         console.error('[GET /api/tickets] Error:', error);
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 },
-        );
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
 
@@ -135,24 +138,24 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
 
-        if (
-            body.title === undefined ||
-            body.description === undefined ||
-            (typeof body.title === 'string' && body.title.trim() === '') ||
-            (typeof body.description === 'string' && body.description.trim() === '')
-        ) {
-            return NextResponse.json(
-                { error: 'title and description are required' },
-                { status: 400 },
-            );
-        }
-
         const parsed = ticketCreateSchema.safeParse(body);
         if (!parsed.success) {
-            return NextResponse.json(
-                { error: formatZodError(parsed.error) },
-                { status: 400 },
+            // Preserve the legacy "required" message when title/description are
+            // missing or blank; body may be null (valid JSON), so derive it
+            // from the Zod issues instead of reading body.title first.
+            const issues = parsed.error.issues;
+            const missingRequired = issues.some(
+                (i) =>
+                    (i.path[0] === 'title' || i.path[0] === 'description') &&
+                    (i.code === 'invalid_type' || i.code === 'too_small'),
             );
+            if (missingRequired) {
+                return NextResponse.json(
+                    { error: 'title and description are required' },
+                    { status: 400 },
+                );
+            }
+            return NextResponse.json({ error: formatZodError(parsed.error) }, { status: 400 });
         }
         const input = parsed.data;
 
@@ -184,14 +187,8 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('[POST /api/tickets] Error:', error);
         if (error instanceof SyntaxError) {
-            return NextResponse.json(
-                { error: 'Invalid request body' },
-                { status: 400 },
-            );
+            return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
         }
-        return NextResponse.json(
-            { error: 'Internal server error' },
-            { status: 500 },
-        );
+        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

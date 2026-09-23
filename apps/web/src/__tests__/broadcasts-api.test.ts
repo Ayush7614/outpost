@@ -235,7 +235,11 @@ describe('PATCH /api/broadcasts/[id]', () => {
         mockBroadcastFindUnique.mockResolvedValue(MOCK_BROADCAST);
         mockBroadcastUpdate.mockResolvedValue({ ...MOCK_BROADCAST, message: 'Updated' });
 
-        const req = makeJsonRequest('http://localhost:3000/api/broadcasts/bc-1', { message: 'Updated' }, 'PATCH');
+        const req = makeJsonRequest(
+            'http://localhost:3000/api/broadcasts/bc-1',
+            { message: 'Updated' },
+            'PATCH',
+        );
         const res = await PATCH(req as never, { params: Promise.resolve({ id: 'bc-1' }) });
         const body = await res.json();
 
@@ -245,7 +249,11 @@ describe('PATCH /api/broadcasts/[id]', () => {
     it('rejects updating a sent broadcast', async () => {
         mockBroadcastFindUnique.mockResolvedValue({ ...MOCK_BROADCAST, status: 'SENT' });
 
-        const req = makeJsonRequest('http://localhost:3000/api/broadcasts/bc-1', { message: 'Updated' }, 'PATCH');
+        const req = makeJsonRequest(
+            'http://localhost:3000/api/broadcasts/bc-1',
+            { message: 'Updated' },
+            'PATCH',
+        );
         const res = await PATCH(req as never, { params: Promise.resolve({ id: 'bc-1' }) });
 
         expect(res.status).toBe(400);
@@ -254,7 +262,11 @@ describe('PATCH /api/broadcasts/[id]', () => {
     it('returns 404 for non-existent broadcast', async () => {
         mockBroadcastFindUnique.mockResolvedValue(null);
 
-        const req = makeJsonRequest('http://localhost:3000/api/broadcasts/nope', { message: 'Updated' }, 'PATCH');
+        const req = makeJsonRequest(
+            'http://localhost:3000/api/broadcasts/nope',
+            { message: 'Updated' },
+            'PATCH',
+        );
         const res = await PATCH(req as never, { params: Promise.resolve({ id: 'nope' }) });
 
         expect(res.status).toBe(404);
@@ -263,7 +275,11 @@ describe('PATCH /api/broadcasts/[id]', () => {
     it('rejects empty message', async () => {
         mockBroadcastFindUnique.mockResolvedValue(MOCK_BROADCAST);
 
-        const req = makeJsonRequest('http://localhost:3000/api/broadcasts/bc-1', { message: '' }, 'PATCH');
+        const req = makeJsonRequest(
+            'http://localhost:3000/api/broadcasts/bc-1',
+            { message: '' },
+            'PATCH',
+        );
         const res = await PATCH(req as never, { params: Promise.resolve({ id: 'bc-1' }) });
 
         expect(res.status).toBe(400);

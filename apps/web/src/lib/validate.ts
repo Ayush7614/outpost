@@ -28,11 +28,7 @@ export const MAX_ID_LENGTH = 100;
 export const MAX_BROADCAST_LENGTH = 500;
 
 const nonEmptyTrimmed = (max: number) =>
-    z
-        .string()
-        .trim()
-        .min(1, 'must not be empty')
-        .max(max, `must be at most ${max} characters`);
+    z.string().trim().min(1, 'must not be empty').max(max, `must be at most ${max} characters`);
 
 /** Parse a repeated enum query param; unknown values are reported, not cast. */
 function enumFilter<E extends Record<string, string>>(enumObj: E, field: string) {
@@ -64,9 +60,10 @@ export interface Pagination {
 
 /** Parse page/pageSize defensively: NaN and out-of-range values fall back to defaults. */
 export function parsePagination(searchParams: URLSearchParams): Pagination {
+    const MAX_PAGE = 10000;
     const rawPage = Number.parseInt(searchParams.get('page') ?? '', 10);
     const rawPageSize = Number.parseInt(searchParams.get('pageSize') ?? '', 10);
-    const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1;
+    const page = Number.isSafeInteger(rawPage) && rawPage >= 1 && rawPage <= MAX_PAGE ? rawPage : 1;
     const pageSize = Number.isFinite(rawPageSize)
         ? Math.min(MAX_PAGE_SIZE, Math.max(1, rawPageSize))
         : DEFAULT_PAGE_SIZE;

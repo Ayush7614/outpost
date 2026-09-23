@@ -178,7 +178,9 @@ describe('GET /api/docs/articles', () => {
             expect.objectContaining({
                 where: expect.objectContaining({
                     OR: expect.arrayContaining([
-                        expect.objectContaining({ title: expect.objectContaining({ contains: 'quick' }) }),
+                        expect.objectContaining({
+                            title: expect.objectContaining({ contains: 'quick' }),
+                        }),
                     ]),
                 }),
             }),
@@ -240,7 +242,9 @@ describe('GET /api/docs/articles/[id]', () => {
         mockDocArticleFindUnique.mockResolvedValue(MOCK_ARTICLE);
 
         const req = makeGetRequest('http://localhost:3000/api/docs/articles/art-1');
-        const res = await getArticleById(req as never, { params: Promise.resolve({ id: 'art-1' }) });
+        const res = await getArticleById(req as never, {
+            params: Promise.resolve({ id: 'art-1' }),
+        });
         const body = await res.json();
 
         expect(body.title).toBe('Quick Start Guide');
@@ -266,7 +270,11 @@ describe('PATCH /api/docs/articles/[id]', () => {
         mockDocArticleFindUnique.mockResolvedValue(MOCK_ARTICLE);
         mockDocArticleUpdate.mockResolvedValue({ ...MOCK_ARTICLE, title: 'Updated Title' });
 
-        const req = makeJsonRequest('http://localhost:3000/api/docs/articles/art-1', { title: 'Updated Title' }, 'PATCH');
+        const req = makeJsonRequest(
+            'http://localhost:3000/api/docs/articles/art-1',
+            { title: 'Updated Title' },
+            'PATCH',
+        );
         const res = await patchArticle(req as never, { params: Promise.resolve({ id: 'art-1' }) });
         const body = await res.json();
 
@@ -276,7 +284,11 @@ describe('PATCH /api/docs/articles/[id]', () => {
     it('returns 404 for non-existent article', async () => {
         mockDocArticleFindUnique.mockResolvedValue(null);
 
-        const req = makeJsonRequest('http://localhost:3000/api/docs/articles/nope', { title: 'Test' }, 'PATCH');
+        const req = makeJsonRequest(
+            'http://localhost:3000/api/docs/articles/nope',
+            { title: 'Test' },
+            'PATCH',
+        );
         const res = await patchArticle(req as never, { params: Promise.resolve({ id: 'nope' }) });
 
         expect(res.status).toBe(404);
